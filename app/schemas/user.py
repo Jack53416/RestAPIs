@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, EmailStr
 
 
 class UserBase(BaseModel):
@@ -11,7 +11,7 @@ class UserCreate(UserBase):
 
 class User(UserBase):
     id: int
-    is_active: bool = Field(True, alias='isActive')
+    is_active: bool = True
 
     class Config:
         orm_mode = True

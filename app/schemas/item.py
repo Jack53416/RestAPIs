@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class ItemBase(BaseModel):
@@ -12,7 +12,7 @@ class ItemCreate(ItemBase):
 
 class Item(ItemBase):
     id: int
-    owner_id: int = Field(..., alias='ownerId')
+    owner_id: int
 
     class Config:
         orm_mode = True

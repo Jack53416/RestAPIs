@@ -23,14 +23,14 @@ class Client(ClientBase):
 
 class ProjectBase(BaseModel):
     name: str
-    client_id: int = Field(..., gt=0, alias='clientId')
-    integrity_path: str = Field(..., alias='integrityPath')
-    is_active: bool = Field(True, alias='isActive')
+    client_id: int = Field(..., gt=0)
+    integrity_path: str
+    is_active: bool = True
     contacts: str
     description: str
-    react_on_new_cp: bool = Field(False, alias='reactOnNewCp')
-    last_ptc_update: datetime = Field(None, alias='lastPtcUpdate')
-    integration_name: str = Field(None, alias='integrationName')
+    react_on_new_cp: bool = False
+    last_ptc_update: datetime = None
+    integration_name: str = None
 
 
 class Project(ProjectBase):
@@ -41,9 +41,9 @@ class Project(ProjectBase):
 
 
 class ProjectUserBase(BaseModel):
-    user_id: int = Field(..., gt=0, description='Id of an existing user', alias='userId')
-    project_id: int = Field(..., gt=0, description='Id of an existing project', alias='projectId')
-    join_message: str = Field(..., alias='joinMessage', max_length=300,
+    user_id: int = Field(..., gt=0, description='Id of an existing user')
+    project_id: int = Field(..., gt=0, description='Id of an existing project')
+    join_message: str = Field(..., max_length=300,
                               description='Join request message, that will be displayed to '
                                           'a project manager')
 
@@ -55,9 +55,9 @@ class ProjectUserCreate(ProjectUserBase):
 class ProjectUser(ProjectUserBase):
     id: int
     role: ProjectRole = ProjectRole.awaiting
-    is_project_favourite: bool = Field(False, alias='isProjectFavourite')
-    date_joined: datetime = Field(None, alias='dateJoined')
-    date_requested: datetime = Field(None, alias='dateRequested')
+    is_project_favourite: bool = False
+    date_joined: datetime = None
+    date_requested: datetime = None
 
     class Config:
         orm_mode = True
