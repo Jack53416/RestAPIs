@@ -1,7 +1,5 @@
-from sqlalchemy import Column, String, Integer, Boolean, ForeignKey
-from sqlalchemy.orm import relationship, Session
+from sqlalchemy import Column, String, Integer, Boolean
 
-from app import schemas
 from app.db.base_class import Base
 
 

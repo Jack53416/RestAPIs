@@ -9,7 +9,7 @@ class UserBase(BaseModel):
 
 
 class UserBaseInDb(UserBase):
-    id: int
+    id: int = None
 
     class Config(object):
         orm_mode = True
