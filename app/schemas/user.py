@@ -1,17 +1,36 @@
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel
 
 
 class UserBase(BaseModel):
-    email: EmailStr
+    email: str = None
+    is_active: bool = False
+    is_superuser: bool = False
+    full_name: str = None
 
 
-class UserCreate(UserBase):
+class UserBaseInDb(UserBase):
+    id: int
+
+    class Config(object):
+        orm_mode = True
+
+
+# Properties to receive via API on creation
+class UserCreate(UserBaseInDb):
+    email: str
     password: str
 
 
-class User(UserBase):
-    id: int
-    is_active: bool = Field(True, alias='isActive')
+# Properties to receive via API on update
+class UserUpdate(UserBaseInDb):
+    password: str = None
 
-    class Config:
-        orm_mode = True
+
+# Additional properties to return via API
+class User(UserBaseInDb):
+    pass
+
+
+# Additional properties stored in DB
+class UserInDb(UserBaseInDb):
+    hashed_password: str
