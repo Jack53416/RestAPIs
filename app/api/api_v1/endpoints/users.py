@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from starlette import status
 
@@ -27,7 +27,10 @@ def create_user(user: schemas.UserCreate,
 def read_users(skip: int = 0,
                limit: int = 100,
                db: Session = Depends(get_db),
-               current_user: DBUser = Depends(get_current_active_user)):
+               current_user: DBUser = Depends(get_current_active_user),
+               search: str = Query(None, min_length=3, max_length=512)):
+    if search:
+        return crud.user.search(db, expr=search, skip=skip, limit=limit)
     users = crud.user.get_multi(db, skip=skip, limit=limit)
     return users
 

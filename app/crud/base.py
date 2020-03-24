@@ -1,4 +1,4 @@
-from typing import List, Optional, Generic, TypeVar, Type
+from typing import List, Optional, Generic, TypeVar, Type, Iterable
 
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
@@ -24,7 +24,10 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     def get(self, db_session: Session, id: int) -> Optional[ModelType]:
         return db_session.query(self.model).filter(self.model.id == id).first()
 
-    def get_multi(self, db_session: Session, *, skip=0, limit=100) -> List[ModelType]:
+    def get_multi(self, db_session: Session, *, skip=0, limit=100, filters: Iterable[any] = None) -> List[ModelType]:
+        # ToDo(Jacek): MSSQL requires order by with offset and limit on a query level
+        if filters:
+            return db_session.query(self.model).filter(*filters).offset(skip).limit(limit).all()
         return db_session.query(self.model).offset(skip).limit(limit).all()
 
     def create(self, db_session: Session, *, obj_in: CreateSchemaType) -> ModelType:

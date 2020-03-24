@@ -1,6 +1,7 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from starlette import status
 
@@ -8,7 +9,9 @@ from app import crud
 from app import schemas
 from app.api.utils.db import get_db
 from app.api.utils.security import get_current_active_user
+from app.models import Project, ProjectUser
 from app.models.user import User as DBUser
+from app.schemas import ProjectRole
 
 router = APIRouter()
 
@@ -17,8 +20,16 @@ router = APIRouter()
 def read_projects(skip: int = 0,
                   limit: int = 100,
                   db: Session = Depends(get_db),
-                  current_user: DBUser = Depends(get_current_active_user)):
-    projects = crud.project.get_multi(db, skip=skip, limit=limit)
+                  current_user: DBUser = Depends(get_current_active_user),
+                  client: int = Query(None, gt=0),
+                  name: str = Query(None, min_length=3, max_length=250)):
+    filters = []
+    if client:
+        filters.append(Project.client_id == client)
+    if name:
+        filters.append(func.lower(Project.name).like(f'%{name}%'))
+
+    projects = crud.project.get_multi(db, skip=skip, limit=limit, filters=filters)
     return projects
 
 
@@ -26,8 +37,19 @@ def read_projects(skip: int = 0,
 def read_project_users(skip: int = 0,
                        limit: int = 100,
                        db: Session = Depends(get_db),
-                       current_user: DBUser = Depends(get_current_active_user)):
-    associations = crud.project_user.get_multi(db, skip=skip, limit=limit)
+                       current_user: DBUser = Depends(get_current_active_user),
+                       project: int = Query(None, gt=0),
+                       user: int = Query(None, gt=0),
+                       role: ProjectRole = None):
+    filters = []
+    if project:
+        filters.append(ProjectUser.project_id == project)
+    if user:
+        filters.append(ProjectUser.user_id == user)
+    if role:
+        filters.append(ProjectUser.role == role.value)
+
+    associations = crud.project_user.get_multi(db, skip=skip, limit=limit, filters=filters)
     return associations
 
 

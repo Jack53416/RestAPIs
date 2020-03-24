@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Optional, List
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.models.user import User
@@ -11,6 +12,15 @@ from app.crud.base import CRUDBase
 
 # noinspection PyMethodMayBeStatic
 class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
+    def search(self, db_session: Session, *, expr: str, skip: int = 0, limit: int = 100) -> List[User]:
+        # ToDo(Jacek) Pagination or order by clause for the query
+
+        search = f'%{expr}%'
+        return db_session.query(User).filter(
+            func.lower(User.full_name).like(search) |
+            func.lower(User.username).like(search)
+        ).offset(skip).limit(limit).all()
+
     def get_by_email(self, db_session: Session, *, email: str) -> Optional[User]:
         return db_session.query(User).filter(User.email == email).first()
 
