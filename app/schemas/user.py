@@ -2,6 +2,8 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
+from app.schemas import RWModel
+
 
 class UserBase(BaseModel):
     email: str = None
@@ -15,11 +17,8 @@ class UserBase(BaseModel):
     is_eeci: bool = False
 
 
-class UserBaseInDb(UserBase):
+class UserBaseInDb(RWModel, UserBase):
     id: int = None
-
-    class Config(object):
-        orm_mode = True
 
 
 # Properties to receive via API on creation

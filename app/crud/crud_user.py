@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from sqlalchemy.orm import Session
@@ -18,7 +18,7 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         db_obj = User(
             **obj_in.dict(exclude={'password'}),
             hashed_password=get_password_hash(obj_in.password),
-            date_joined=datetime.now()
+            date_joined=datetime.now(timezone.utc)
         )
         db_session.add(db_obj)
         db_session.commit()

@@ -1,7 +1,9 @@
-from datetime import datetime
+import datetime
 from enum import Enum
 
 from pydantic import BaseModel, Field
+
+from app.schemas.common import RWModel
 
 
 class ProjectRole(str, Enum):
@@ -10,15 +12,9 @@ class ProjectRole(str, Enum):
     awaiting = 'awaiting'
 
 
-class ClientBase(BaseModel):
+class Client(BaseModel):
     name: str
-
-
-class Client(ClientBase):
     id: int
-
-    class Config(object):
-        orm_mode = True
 
 
 class ProjectBase(BaseModel):
@@ -29,15 +25,12 @@ class ProjectBase(BaseModel):
     contacts: str = None
     description: str = None
     react_on_new_cp: bool = None
-    last_ptc_update: datetime = None
+    last_ptc_update: datetime.datetime = None
     integration_name: str = None
 
 
-class ProjectBaseInDb(ProjectBase):
+class ProjectBaseInDb(RWModel, ProjectBase):
     id: int
-
-    class Config(object):
-        orm_mode = True
 
 
 class Project(ProjectBaseInDb):
@@ -50,11 +43,8 @@ class ProjectUserBase(BaseModel):
     join_message: str = None
 
 
-class ProjectUserBaseInDb(ProjectUserBase):
+class ProjectUserBaseInDb(RWModel, ProjectUserBase):
     id: int = None
-
-    class Config(object):
-        orm_mode = True
 
 
 class ProjectUserCreate(ProjectUserBaseInDb):
@@ -70,5 +60,5 @@ class ProjectUserUpdate(ProjectUserBaseInDb):
 class ProjectUser(ProjectUserBaseInDb):
     role: ProjectRole = ProjectRole.awaiting
     is_project_favourite: bool
-    date_joined: datetime = None
-    date_requested: datetime
+    date_joined: datetime.datetime = None
+    date_requested: datetime.datetime
