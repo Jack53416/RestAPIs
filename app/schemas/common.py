@@ -1,6 +1,10 @@
 import datetime
 
+from typing import Generic, TypeVar, List
 from pydantic import BaseModel
+from pydantic.generics import GenericModel
+
+DataT = TypeVar('DataT')
 
 
 def to_camel_case(snake_str: str) -> str:
@@ -18,3 +22,18 @@ class RWModel(BaseModel):
         json_encoders = {datetime.datetime: convert_datetime_to_realword}
         alias_generator = to_camel_case
         orm_mode = True
+
+
+class Links(BaseModel):
+    next: str
+    previous: str
+    current: str
+    last: str
+
+
+class PaginatedResponse(GenericModel, Generic[DataT]):
+    count: int
+    pages: int
+    page_size: int
+    links: Links
+    data: List[DataT] = []

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.schemas import RWModel
 
@@ -23,18 +23,18 @@ class UserBaseInDb(RWModel, UserBase):
 
 # Properties to receive via API on creation
 class UserCreate(UserBaseInDb):
-    email: str
-    username: str
-    password: str
-    first_name: str
-    last_name: str
+    email: str = Field(..., max_length=254)
+    username: str = Field(..., min_length=4, max_length=150)
+    password: str = Field(..., min_length=3, max_length=128)
+    first_name: str = Field(..., max_length=30)
+    last_name: str = Field(..., max_length=150)
     is_staff: bool = True
     is_eeci: bool = False
 
 
 # Properties to receive via API on update
 class UserUpdate(UserBaseInDb):
-    password: str = None
+    password: str = Field(..., min_length=3, max_length=128)
 
 
 # Additional properties to return via API
