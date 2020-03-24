@@ -25,6 +25,7 @@ def login_access_token(
     """
     OAuth2 compatible token login, get an access token for future requests
     """
+
     user = crud.user.authenticate(
         db, email=form_data.username, password=form_data.password
     )
@@ -47,4 +48,5 @@ def test_token(current_user: DBUser = Depends(get_current_user)):
     """
     Test access token
     """
+
     return current_user
