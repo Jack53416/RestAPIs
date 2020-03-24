@@ -11,6 +11,7 @@ from app.api.utils.security import get_current_user
 from app.core import config
 from app.core.jwt import create_access_token
 from app.models.user import User as DBUser
+from app.resources import strings
 from app.schemas.token import Token
 from app.schemas.user import User
 
@@ -28,9 +29,9 @@ def login_access_token(
         db, email=form_data.username, password=form_data.password
     )
     if not user:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect email or password")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.INVALID_EMAIL_PASSWORD)
     elif not crud.user.is_active(user):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.USER_INACTIVE)
     access_token_expires = timedelta(minutes=config.ACCESS_TOKEN_EXPIRE_MINUTES)
     return {
         "access_token": create_access_token(

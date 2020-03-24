@@ -10,6 +10,7 @@ from app.api.utils.db import get_db
 from app.core import config
 from app.core.jwt import ALGORITHM
 from app.models.user import User
+from app.resources import strings
 from app.schemas.token import TokenPayload
 
 reusable_oauth2 = OAuth2PasswordBearer(tokenUrl="/api/v1/login/access-token")
@@ -23,23 +24,23 @@ def get_current_user(
         token_data = TokenPayload(**payload)
     except PyJWTError:
         raise HTTPException(
-            status_code=HTTP_403_FORBIDDEN, detail="Could not validate credentials"
+            status_code=HTTP_403_FORBIDDEN, detail=strings.INVALID_CREDENTIALS
         )
     user = crud.user.get(db, id=token_data.user_id)
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail=strings.USER_DOES_NOT_EXIST)
     return user
 
 
 def get_current_active_user(current_user: User = Security(get_current_user)):
     if not crud.user.is_active(current_user):
-        raise HTTPException(status_code=400, detail="Inactive user")
+        raise HTTPException(status_code=400, detail=strings.USER_INACTIVE)
     return current_user
 
 
 def get_current_active_superuser(current_user: User = Security(get_current_user)):
     if not crud.user.is_superuser(current_user):
         raise HTTPException(
-            status_code=400, detail="The user doesn't have enough privileges"
+            status_code=400, detail=strings.INVALID_ACCESS_RIGHTS
         )
     return current_user

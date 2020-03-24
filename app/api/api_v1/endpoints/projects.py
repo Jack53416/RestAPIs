@@ -11,6 +11,7 @@ from app.api.utils.db import get_db
 from app.api.utils.security import get_current_active_user
 from app.models import Project, ProjectUser
 from app.models.user import User as DBUser
+from app.resources import strings
 from app.schemas import ProjectRole
 
 router = APIRouter()
@@ -58,7 +59,7 @@ def create_project_user(project_user: schemas.ProjectUserCreate,
                         db: Session = Depends(get_db),
                         current_user: DBUser = Depends(get_current_active_user)):
     if crud.project_user.exists(db, user_id=project_user.user_id, project_id=project_user.project_id):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='User is already in this project')
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.USER_ALREADY_IN_PROJECT)
     project_user = crud.project_user.create(db, obj_in=project_user)
     return project_user
 
@@ -73,7 +74,7 @@ def update_project_user_role(*,
     project_user = crud.project_user.get(db, association_id)
     if not project_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail='Searched object does not exist in database')
+                            detail=strings.NOT_FOUND_ERROR)
     project_user = crud.project_user.update(db, db_obj=project_user, obj_in=project_user_in)
     return project_user
 
