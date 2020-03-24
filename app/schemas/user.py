@@ -1,11 +1,18 @@
+from datetime import datetime
+
 from pydantic import BaseModel
 
 
 class UserBase(BaseModel):
     email: str = None
+    username: str = None
+    first_name: str = None
+    last_name: str = None
+    full_name: str = None
     is_active: bool = False
     is_superuser: bool = False
-    full_name: str = None
+    is_staff: bool = False
+    is_eeci: bool = False
 
 
 class UserBaseInDb(UserBase):
@@ -18,7 +25,12 @@ class UserBaseInDb(UserBase):
 # Properties to receive via API on creation
 class UserCreate(UserBaseInDb):
     email: str
+    username: str
     password: str
+    first_name: str
+    last_name: str
+    is_staff: bool = True
+    is_eeci: bool = False
 
 
 # Properties to receive via API on update
@@ -28,7 +40,7 @@ class UserUpdate(UserBaseInDb):
 
 # Additional properties to return via API
 class User(UserBaseInDb):
-    pass
+    date_joined: datetime = None
 
 
 # Additional properties stored in DB
