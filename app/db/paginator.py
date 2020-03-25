@@ -38,6 +38,7 @@ class Paginator(object):
                  page_size: int = Query(default_page_size,
                                         ge=1,
                                         le=max_page_size,
+                                        alias='page-size',
                                         description=strings.PAGINATION_PAGE_SIZE_DESC)):
         self.request = request
         self.page = page
