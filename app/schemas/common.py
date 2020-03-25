@@ -25,15 +25,18 @@ class RWModel(BaseModel):
 
 
 class Links(BaseModel):
-    next: str
-    previous: str
-    current: str
+    next: str = None
+    previous: str = None
+    current: str = None
     last: str
 
 
-class PaginatedResponse(GenericModel, Generic[DataT]):
-    count: int
-    pages: int
-    page_size: int
-    links: Links
+class PaginatedResponse(RWModel, GenericModel, Generic[DataT]):
+    """
+    Paginated response of given content
+    """
+    count: int = None
+    pages: int = None
+    page_size: int = None
+    links: Links = None
     data: List[DataT] = []

@@ -30,9 +30,9 @@ MSSQL_USER = os.getenv('MSSQL_USER', 'sa')
 MSQL_PASSWORD = os.getenv('MSSQL_PASSWORD', 'EECI_sa_!2019-05-24')
 MSSQL_DB = os.getenv('MSSQL_DB', 'EECI_DB')
 MSSQL_PARAMS = urllib.parse.quote_plus(f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={MSSQL_SERVER};'
-                                 f'DATABASE={MSSQL_DB};UID={MSSQL_USER};PWD={MSQL_PASSWORD}')
+                                       f'DATABASE={MSSQL_DB};UID={MSSQL_USER};PWD={MSQL_PASSWORD}')
 SQLALCHEMY_DATABASE_URI = (
-    'mssql+pyodbc:///?odbc_connect=%s' % MSSQL_PARAMS
+        'mssql+pyodbc:///?odbc_connect=%s' % MSSQL_PARAMS
 )
 
 FIRST_SUPERUSER = os.getenv('FIRST_SUPERUSER', 'fastAdmin')

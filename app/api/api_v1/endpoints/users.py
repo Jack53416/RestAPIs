@@ -8,8 +8,10 @@ from app import crud
 from app import schemas
 from app.api.utils.db import get_db
 from app.api.utils.security import get_current_active_superuser, get_current_active_user
+from app.db.paginator import Paginator
 from app.models.user import User as DBUser
 from app.resources import strings
+from app.schemas.common import PaginatedResponse
 
 router = APIRouter()
 
@@ -36,9 +38,8 @@ def create_user(user: schemas.UserCreate,
     return crud.user.create(db, obj_in=user)
 
 
-@router.get("/", response_model=List[schemas.User])
-def read_users(skip: int = 0,
-               limit: int = 100,
+@router.get("/", response_model=PaginatedResponse[schemas.User])
+def read_users(paginator: Paginator = Depends(),
                db: Session = Depends(get_db),
                current_user: DBUser = Depends(get_current_active_user),
                search: str = Query(None, min_length=3, max_length=512)):
@@ -47,8 +48,8 @@ def read_users(skip: int = 0,
     """
 
     if search:
-        return crud.user.search(db, expr=search, skip=skip, limit=limit)
-    users = crud.user.get_multi(db, skip=skip, limit=limit)
+        return crud.user.search(db, expr=search)
+    users = crud.user.get_multi_paginated(db, paginator=paginator)
     return users
 
 

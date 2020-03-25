@@ -4,7 +4,9 @@ from typing import Optional, List
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from app.db.paginator import Paginator
 from app.models.user import User
+from app.schemas.common import PaginatedResponse
 from app.schemas.user import UserCreate, UserUpdate
 from app.core.security import verify_password, get_password_hash
 from app.crud.base import CRUDBase
@@ -12,14 +14,14 @@ from app.crud.base import CRUDBase
 
 # noinspection PyMethodMayBeStatic
 class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
-    def search(self, db_session: Session, *, expr: str, skip: int = 0, limit: int = 100) -> List[User]:
-        # ToDo(Jacek) Pagination or order by clause for the query
+    def search(self, db_session: Session, *, expr: str, paginator: Paginator) -> PaginatedResponse:
 
         search = f'%{expr}%'
-        return db_session.query(User).filter(
+        query = db_session.query(self.model).filter(
             func.lower(User.full_name).like(search) |
             func.lower(User.username).like(search)
-        ).offset(skip).limit(limit).all()
+        )
+        return paginator.paginate(db_session, self.model, query)
 
     def get_by_email(self, db_session: Session, *, email: str) -> Optional[User]:
         return db_session.query(User).filter(User.email == email).first()

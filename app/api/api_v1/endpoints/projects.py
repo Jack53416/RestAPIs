@@ -8,39 +8,37 @@ from starlette import status
 from app import crud
 from app import schemas
 from app.api.utils.db import get_db
+from app.db.paginator import Paginator
 from app.api.utils.security import get_current_active_user
 from app.models import Project, ProjectUser
 from app.models.user import User as DBUser
 from app.resources import strings
 from app.schemas import ProjectRole
+from app.schemas.common import PaginatedResponse
 
 router = APIRouter()
 
 
-@router.get("/", response_model=List[schemas.Project])
-def read_projects(skip: int = 0,
-                  limit: int = 100,
+@router.get("/", response_model=PaginatedResponse[schemas.Project])
+def read_projects(paginator: Paginator = Depends(),
                   db: Session = Depends(get_db),
-                  current_user: DBUser = Depends(get_current_active_user),
                   client: int = Query(None, gt=0),
                   name: str = Query(None, min_length=3, max_length=250)):
     """
     Retrieve projects..
     """
-
     filters = []
     if client:
         filters.append(Project.client_id == client)
     if name:
         filters.append(func.lower(Project.name).like(f'%{name}%'))
 
-    projects = crud.project.get_multi(db, skip=skip, limit=limit, filters=filters)
+    projects = crud.project.get_multi_paginated(db, filters=filters, paginator=paginator)
     return projects
 
 
-@router.get('/user', response_model=List[schemas.ProjectUser])
-def read_project_users(skip: int = 0,
-                       limit: int = 100,
+@router.get('/user', response_model=PaginatedResponse[schemas.ProjectUser])
+def read_project_users(paginator: Paginator = Depends(),
                        db: Session = Depends(get_db),
                        current_user: DBUser = Depends(get_current_active_user),
                        project: int = Query(None, gt=0),
@@ -58,7 +56,7 @@ def read_project_users(skip: int = 0,
     if role:
         filters.append(ProjectUser.role == role.value)
 
-    associations = crud.project_user.get_multi(db, skip=skip, limit=limit, filters=filters)
+    associations = crud.project_user.get_multi_paginated(db, filters=filters, paginator=paginator)
     return associations
 
 
