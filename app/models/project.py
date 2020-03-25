@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime
 
-from app.database import Base
+from app.db.base_class import Base
 
 
 class Clients(Base):
@@ -33,7 +33,7 @@ class ProjectUser(Base):
 
     id = Column('Id', Integer, primary_key=True, index=True)
     user_id = Column('UserId', ForeignKey('core_user.id'))
-    project_id = Column('ProjectId', ForeignKey('t_projects.Id'))
+    project_id = Column('ProjectId', ForeignKey('t_projects.Id', use_alter=True), nullable=False)
     role = Column('Role', String)
     is_project_favourite = Column('IsFavouriteProject', Boolean)
     date_joined = Column('JoinDate', DateTime)

@@ -1,7 +1,9 @@
-from datetime import datetime
+import datetime
 from enum import Enum
 
 from pydantic import BaseModel, Field
+
+from app.schemas.common import RWModel
 
 
 class ProjectRole(str, Enum):
@@ -10,54 +12,53 @@ class ProjectRole(str, Enum):
     awaiting = 'awaiting'
 
 
-class ClientBase(BaseModel):
+class Client(BaseModel):
     name: str
-
-
-class Client(ClientBase):
     id: int
-
-    class Config:
-        orm_mode = True
 
 
 class ProjectBase(BaseModel):
-    name: str
-    client_id: int = Field(..., gt=0)
-    integrity_path: str
-    is_active: bool = True
-    contacts: str
-    description: str
-    react_on_new_cp: bool = False
-    last_ptc_update: datetime = None
+    name: str = None
+    client_id: int = None
+    integrity_path: str = None
+    is_active: bool = None
+    contacts: str = None
+    description: str = None
+    react_on_new_cp: bool = None
+    last_ptc_update: datetime.datetime = None
     integration_name: str = None
 
 
-class Project(ProjectBase):
+class ProjectBaseInDb(RWModel, ProjectBase):
     id: int
 
-    class Config:
-        orm_mode = True
 
-
-class ProjectUserBase(BaseModel):
-    user_id: int = Field(..., gt=0, description='Id of an existing user')
-    project_id: int = Field(..., gt=0, description='Id of an existing project')
-    join_message: str = Field(..., max_length=300,
-                              description='Join request message, that will be displayed to '
-                                          'a project manager')
-
-
-class ProjectUserCreate(ProjectUserBase):
+class Project(ProjectBaseInDb):
     pass
 
 
-class ProjectUser(ProjectUserBase):
-    id: int
-    role: ProjectRole = ProjectRole.awaiting
-    is_project_favourite: bool = False
-    date_joined: datetime = None
-    date_requested: datetime = None
+class ProjectUserBase(BaseModel):
+    user_id: int = None
+    project_id: int = None
+    join_message: str = None
 
-    class Config:
-        orm_mode = True
+
+class ProjectUserBaseInDb(RWModel, ProjectUserBase):
+    id: int = None
+
+
+class ProjectUserCreate(ProjectUserBaseInDb):
+    user_id: int = Field(..., gt=0, description='Id of a user that will join a project')
+    project_id: int = Field(..., gt=0)
+    join_message: str = Field(..., description='Message that will be displayed to a project manager')
+
+
+class ProjectUserUpdate(ProjectUserBaseInDb):
+    role: ProjectRole
+
+
+class ProjectUser(ProjectUserBaseInDb):
+    role: ProjectRole = ProjectRole.awaiting
+    is_project_favourite: bool
+    date_joined: datetime.datetime = None
+    date_requested: datetime.datetime
