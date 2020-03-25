@@ -48,7 +48,7 @@ def read_users(paginator: Paginator = Depends(),
     """
 
     if search:
-        return crud.user.search(db, expr=search)
+        return crud.user.search(db, expr=search, paginator=paginator)
     users = crud.user.get_multi_paginated(db, paginator=paginator)
     return users
 
