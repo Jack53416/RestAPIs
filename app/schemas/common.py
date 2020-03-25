@@ -1,7 +1,7 @@
 import datetime
 
 from typing import Generic, TypeVar, List
-from pydantic import BaseModel
+from pydantic import BaseModel, HttpUrl, AnyUrl
 from pydantic.generics import GenericModel
 
 DataT = TypeVar('DataT')
@@ -25,18 +25,18 @@ class RWModel(BaseModel):
 
 
 class Links(BaseModel):
-    next: str = None
-    previous: str = None
-    current: str = None
-    last: str
+    next: AnyUrl = None
+    previous: AnyUrl = None
+    current: AnyUrl
+    last: AnyUrl
 
 
 class PaginatedResponse(RWModel, GenericModel, Generic[DataT]):
     """
     Paginated response of given content
     """
-    count: int = None
-    pages: int = None
-    page_size: int = None
-    links: Links = None
-    data: List[DataT] = []
+    count: int = 0
+    pages: int = 0
+    page_size: int
+    links: Links
+    data: List[DataT]

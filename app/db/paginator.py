@@ -1,17 +1,25 @@
 from math import ceil
 from typing import Optional
 
-from fastapi import Query
+from fastapi import Query, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import Query as DBQuery
+from starlette import status
 from starlette.requests import Request
 
 from app.db.base_class import Base
+from app.resources import strings
 from app.schemas.common import Links, PaginatedResponse
 
 
 class Paginator(object):
+    """
+    Custom page paginator class. It utilizes CTE SQL queries to get record count efficiently in a single
+    database query
+    """
+
     # ToDo(Jacek): Specify default ordering for each model and use it in paginator
+    # ToDo(Jacek): Add suport for multiple field ordering
 
     default_page_size = 100
     default_page = 1
@@ -19,14 +27,24 @@ class Paginator(object):
 
     def __init__(self,
                  request: Request,
-                 ordering: str = None,
-                 page: int = Query(default_page, ge=1),
-                 page_size: int = Query(default_page_size, ge=1, le=max_page_size)):
+                 ordering: str = Query(None,
+                                       regex='^-?\\w+$',
+                                       min_length=2,
+                                       description=strings.PAGINATION_ORDERING_DESC,
+                                       example='-id'),
+                 page: int = Query(default_page,
+                                   ge=1,
+                                   description=strings.PAGINATION_PAGE_DESC),
+                 page_size: int = Query(default_page_size,
+                                        ge=1,
+                                        le=max_page_size,
+                                        description=strings.PAGINATION_PAGE_SIZE_DESC)):
         self.request = request
         self.page = page
         self.page_size = page_size
         self.ordering = ordering
         self.total_pages = 0
+        self.total_records = 0
 
     def parse_order(self, model: Base, query_fields: any) -> any:
         if self.ordering is None:
@@ -69,9 +87,9 @@ class Paginator(object):
     def last_url(self) -> str:
         return str(self.request.url)
 
-    def get_total_pages(self, total_records: int) -> int:
-        self.total_pages = ceil(total_records / self.page_size)
-        return self.total_pages
+    def get_total_pages(self) -> int:
+        total_pages = ceil(self.total_records / self.page_size)
+        return total_pages
 
     def generate_links(self) -> Links:
         return Links.construct(
@@ -92,12 +110,16 @@ class Paginator(object):
              )
         result = q.all()
 
-        total_records = result[0].tbl_row_count if result else 0
+        self.total_records = result[0].tbl_row_count if result else 0
+        self.total_pages = self.get_total_pages()
+        if self.page > self.total_pages:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.NOT_FOUND_ERROR)
+
         data = [model.map_db_columns(**r._asdict()) for r in result]
 
         return PaginatedResponse.construct(
-            count=len(data),
-            pages=self.get_total_pages(total_records),
+            count=self.total_records,
+            pages=self.total_pages,
             page_size=self.page_size,
             links=self.generate_links(),
             data=data
