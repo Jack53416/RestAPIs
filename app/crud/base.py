@@ -4,7 +4,9 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from app.db.paginator import Paginator
 from app.db.base_class import Base
+from app.schemas.common import PaginatedResponse
 
 ModelType = TypeVar("ModelType", bound=Base)
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
@@ -24,6 +26,15 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     def get(self, db_session: Session, id: int) -> Optional[ModelType]:
         return db_session.query(self.model).filter(self.model.id == id).first()
 
+    def get_multi_paginated(self,
+                            db_session: Session, *,
+                            filters: Iterable[any] = None,
+                            paginator: Paginator) -> PaginatedResponse:
+        query = db_session.query(self.model)
+        if filters:
+            query = query.filter(*filters)
+        return paginator.paginate(db_session, model=self.model, base_query=query)
+
     def get_multi(self, db_session: Session, *, skip=0, limit=100, filters: Iterable[any] = None) -> List[ModelType]:
         # ToDo(Jacek): MSSQL requires order by with offset and limit on a query level
         if filters:
@@ -39,7 +50,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         return db_obj
 
     def update(
-        self, db_session: Session, *, db_obj: ModelType, obj_in: UpdateSchemaType
+            self, db_session: Session, *, db_obj: ModelType, obj_in: UpdateSchemaType
     ) -> ModelType:
         obj_data = jsonable_encoder(db_obj)
         update_data = obj_in.dict(skip_defaults=True)
