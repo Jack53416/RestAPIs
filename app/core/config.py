@@ -35,6 +35,8 @@ SQLALCHEMY_DATABASE_URI = (
         'mssql+pyodbc:///?odbc_connect=%s' % MSSQL_PARAMS
 )
 
+TEST_DATABASE_URI = "sqlite:///./test.db"
+
 FIRST_SUPERUSER = os.getenv('FIRST_SUPERUSER', 'fastAdmin')
 FIRST_SUPERUSER_PASSWORD = os.getenv('FIRST_SUPERUSER_PASSWORD', 'asd')
 
