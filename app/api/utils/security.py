@@ -22,7 +22,7 @@ def get_current_user(
     try:
         payload = jwt.decode(token, config.SECRET_KEY, algorithms=[ALGORITHM])
         token_data = TokenPayload(**payload)
-    except PyJWTError:
+    except PyJWTError as ex:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=strings.INVALID_CREDENTIALS,
