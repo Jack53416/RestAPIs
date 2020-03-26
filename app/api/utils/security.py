@@ -3,7 +3,7 @@ from fastapi import Depends, HTTPException, Security
 from fastapi.security import OAuth2PasswordBearer
 from jwt import PyJWTError
 from sqlalchemy.orm import Session
-from starlette.status import HTTP_403_FORBIDDEN
+from starlette import status
 
 from app import crud
 from app.api.utils.db import get_db
@@ -24,11 +24,15 @@ def get_current_user(
         token_data = TokenPayload(**payload)
     except PyJWTError:
         raise HTTPException(
-            status_code=HTTP_403_FORBIDDEN, detail=strings.INVALID_CREDENTIALS
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=strings.INVALID_CREDENTIALS,
+            headers={"WWW-Authenticate": "Bearer"},
         )
     user = crud.user.get(db, id=token_data.user_id)
     if not user:
-        raise HTTPException(status_code=404, detail=strings.USER_DOES_NOT_EXIST)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail=strings.INVALID_CREDENTIALS,
+                            headers={"WWW-Authenticate": "Bearer"})
     return user
 
 

@@ -30,7 +30,9 @@ def login_access_token(
         db, email=form_data.username, password=form_data.password
     )
     if not user:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.INVALID_EMAIL_PASSWORD)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail=strings.INVALID_EMAIL_PASSWORD,
+                            headers={"WWW-Authenticate": "Bearer"})
     elif not crud.user.is_active(user):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.USER_INACTIVE)
     access_token_expires = timedelta(minutes=config.ACCESS_TOKEN_EXPIRE_MINUTES)
