@@ -1,5 +1,3 @@
-from typing import List
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from starlette import status
@@ -16,10 +14,11 @@ from app.schemas.common import PaginatedResponse
 router = APIRouter()
 
 
-@router.post("/", response_model=schemas.User)
+@router.post("/",
+             response_model=schemas.User,
+             dependencies=[Depends(get_current_active_superuser)])
 def create_user(user: schemas.UserCreate,
-                db: Session = Depends(get_db),
-                current_user: DBUser = Depends(get_current_active_superuser)):
+                db: Session = Depends(get_db)):
     """
     Create user. Requires superuser privileges.
 
@@ -38,10 +37,11 @@ def create_user(user: schemas.UserCreate,
     return crud.user.create(db, obj_in=user)
 
 
-@router.get("/", response_model=PaginatedResponse[schemas.User])
+@router.get("/",
+            response_model=PaginatedResponse[schemas.User],
+            dependencies=[Depends(get_current_active_user)])
 def read_users(paginator: Paginator = Depends(),
                db: Session = Depends(get_db),
-               current_user: DBUser = Depends(get_current_active_user),
                search: str = Query(None, min_length=3, max_length=512)):
     """
     Retrieve users.
@@ -53,10 +53,11 @@ def read_users(paginator: Paginator = Depends(),
     return users
 
 
-@router.get("/{user_id}", response_model=schemas.User)
+@router.get("/{user_id}",
+            response_model=schemas.User,
+            dependencies=[Depends(get_current_active_user)])
 def read_user(user_id: int,
-              db: Session = Depends(get_db),
-              current_user: DBUser = Depends(get_current_active_user)):
+              db: Session = Depends(get_db)):
     """
     Retrieve a specific user by id.
     """
@@ -65,4 +66,3 @@ def read_user(user_id: int,
     if db_user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.USER_DOES_NOT_EXIST)
     return db_user
-
