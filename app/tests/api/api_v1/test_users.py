@@ -16,13 +16,12 @@ from app.tests.utils.factories import UserFactory
 def test_list_response(app: FastAPI, authorized_client: TestClient, test_user: DBUser):
     response = authorized_client.get(app.url_path_for('users:list-users'))
     assert response.status_code == status.HTTP_200_OK
-    assert (
-        PaginatedResponse(**response.json()).json(exclude={'links'}) ==
-        PaginatedResponse(count=1,
-                          pages=Paginator.default_page,
-                          page_size=Paginator.default_page_size,
-                          data=[User(**test_user.__dict__)]).json(exclude={'links'}),
-    )
+    response = PaginatedResponse.parse_raw(response.content)
+    assert response.count == 1
+    assert response.page_size == Paginator.default_page_size
+    assert response.pages == 1
+    assert len(response.data) == 1
+    assert User.parse_obj(test_user.__dict__) == User.parse_obj(response.data.pop())
 
 
 def test_create_user(app: FastAPI, authorized_client: TestClient, user_factory: UserFactory, db_session: Session):
@@ -31,14 +30,9 @@ def test_create_user(app: FastAPI, authorized_client: TestClient, user_factory: 
                                       UserCreate(**user.__dict__, password='asd').json())
 
     assert response.status_code == status.HTTP_200_OK
-    response_user = User(**response.json())
-    assert (
-            response_user.dict(exclude={'id', 'date_joined'}) ==
-            User(**user.__dict__).dict(exclude={'id', 'date_joined'})
-    )
-
+    response_user = User.parse_raw(response.content)
     db_user = crud.user.get(db_session, response_user.id)
-    assert response_user.json() == User(**db_user.__dict__).json()
+    assert response_user == User.parse_obj(db_user.__dict__)
 
 
 def test_ordering_username(app: FastAPI, authorized_client: TestClient, test_user, user_factory: UserFactory):
@@ -49,11 +43,18 @@ def test_ordering_username(app: FastAPI, authorized_client: TestClient, test_use
     user_list.append(test_user)
 
     response = authorized_client.get(app.url_path_for('users:list-users'), params={'ordering': 'username'})
-    json_resp = response.json()
     assert response.status_code == status.HTTP_200_OK
-    assert json_resp.get('count') == user_number + 1
+
+    response = PaginatedResponse.parse_raw(response.content)
+    assert response.count == user_number + 1
 
     expected_response = sorted([user.username for user in user_list])
-    actual_response = [user.get('username') for user in json_resp.get('data')]
+    actual_response = [user.get('username') for user in response.data]
 
     assert actual_response == expected_response
+
+
+def test_get_user_detail(app: FastAPI, authorized_client: TestClient, test_user: DBUser):
+    response = authorized_client.get(app.url_path_for('users:get-user', user_id=str(test_user.id)))
+    assert response.status_code == status.HTTP_200_OK
+    assert User.parse_raw(response.content) == User.parse_obj(test_user.__dict__)

@@ -28,8 +28,8 @@ class PathTest(NamedTuple):
 
 
 user_secured_endpoints = [
-    Endpoint('login:verify-token', ['post']),
-    Endpoint('users:list-users', ['get', 'post']),
+    Endpoint('login/verify-token', ['post']),
+    Endpoint('users/', ['get', 'post']),
     Endpoint('users/1', ['get']),
     Endpoint('projects/', ['get']),
 ]
