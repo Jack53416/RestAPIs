@@ -27,17 +27,24 @@ class PathTest(NamedTuple):
         return f'{self.method} - {self.url}'
 
 
-secured_endpoints = [
-    Endpoint('login/test-token', ['post']),
-    Endpoint('users/', ['get', 'post']),
+user_secured_endpoints = [
+    Endpoint('login:verify-token', ['post']),
+    Endpoint('users:list-users', ['get', 'post']),
     Endpoint('users/1', ['get']),
     Endpoint('projects/', ['get']),
 ]
 
-secured_paths = [PathTest(endpoint.url, method) for endpoint in secured_endpoints for method in endpoint.methods]
+admin_secured_endpoints = [
+    Endpoint('users/', ['post'])
+]
 
 
-@pytest.mark.parametrize('endpoint', secured_paths, ids=str)
+user_secured_paths = [
+    PathTest(endpoint.url, method) for endpoint in user_secured_endpoints for method in endpoint.methods
+]
+
+
+@pytest.mark.parametrize('endpoint', user_secured_paths, ids=str)
 def test_anonymous_access_denied(client: TestClient, endpoint):
     response = client.request(method=endpoint.method, url=f'api/v1/{endpoint.url}')
     assert response.status_code == status.HTTP_401_UNAUTHORIZED

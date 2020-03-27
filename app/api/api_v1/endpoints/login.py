@@ -18,7 +18,9 @@ from app.schemas.user import User
 router = APIRouter()
 
 
-@router.post("/access-token", response_model=Token)
+@router.post("/access-token",
+             response_model=Token,
+             name='login:create-token')
 def login_access_token(
         db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()
 ):
@@ -37,13 +39,15 @@ def login_access_token(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.USER_INACTIVE)
     access_token_expires = timedelta(minutes=config.ACCESS_TOKEN_EXPIRE_MINUTES)
     return {
-        "access_token": create_user_access_token(user),
+        "access_token": create_user_access_token(user, access_token_expires),
         "token_type": "bearer",
     }
 
 
-@router.post("/test-token", response_model=User)
-def test_token(current_user: DBUser = Depends(get_current_user)):
+@router.post("/verify-token",
+             response_model=User,
+             name='login:verify-token')
+def verify_token(current_user: DBUser = Depends(get_current_user)):
     """
     Test access token
     """
