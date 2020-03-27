@@ -33,10 +33,15 @@ def tables(engine):
     Base.metadata.drop_all(engine)
 
 
-@pytest.fixture(scope='function', autouse=True)
-def db_session(engine, tables):
-    """Returns an sqlalchemy session, and after the test tears down everything properly."""
+@pytest.fixture(scope='session')
+def connection(engine):
     connection = engine.connect()
+    yield connection
+    connection.close()
+
+
+@pytest.fixture(scope='function', autouse=False)
+def db_session(connection, tables):
     # begin the nested transaction
     transaction = connection.begin()
     SessionLocal.configure(autocommit=False, autoflush=False, bind=connection)
@@ -48,8 +53,6 @@ def db_session(engine, tables):
     # session.rollback()
     transaction.rollback()
     TestSession.remove()
-    # put back the connection to the connection pool
-    connection.close()
 
 
 @pytest.fixture

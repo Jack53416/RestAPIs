@@ -35,7 +35,7 @@ def test_create_user(app: FastAPI, authorized_client: TestClient, user_factory: 
     assert response_user == User.parse_obj(db_user.__dict__)
 
 
-def test_ordering_username(app: FastAPI, authorized_client: TestClient, test_user, user_factory: UserFactory):
+def test_ordering_username_asc(app: FastAPI, authorized_client: TestClient, test_user, user_factory: UserFactory):
     user_number = 5
     user_list: List[DBUser] = [
         user_factory.create() for _ in range(user_number)
