@@ -1,5 +1,6 @@
 import os
 import urllib
+from pathlib import Path
 
 
 def getenv_boolean(var_name, default_value=False):
@@ -8,6 +9,9 @@ def getenv_boolean(var_name, default_value=False):
     if env_value is not None:
         result = env_value.upper() in ('TRUE', '1')
     return result
+
+
+PROJECT_ROOT = Path(__file__).parent.parent
 
 
 API_V1_STR = '/api/v1'
@@ -35,7 +39,7 @@ SQLALCHEMY_DATABASE_URI = (
         'mssql+pyodbc:///?odbc_connect=%s' % MSSQL_PARAMS
 )
 
+TEST_DATABASE_URI = f'sqlite:///{PROJECT_ROOT}/test.db'
+
 FIRST_SUPERUSER = os.getenv('FIRST_SUPERUSER', 'fastAdmin')
 FIRST_SUPERUSER_PASSWORD = os.getenv('FIRST_SUPERUSER_PASSWORD', 'asd')
-
-USERS_OPEN_REGISTRATION = getenv_boolean('USERS_OPEN_REGISTRATION', True)

@@ -38,5 +38,5 @@ class PaginatedResponse(RWModel, GenericModel, Generic[DataT]):
     count: int = 0
     pages: int = 0
     page_size: int
-    links: Links
+    links: Links = None
     data: List[DataT]

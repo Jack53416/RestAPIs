@@ -2,8 +2,10 @@ from math import ceil
 from typing import Optional
 
 from fastapi import Query, HTTPException
+from sqlalchemy import inspect, func, select
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import Query as DBQuery
+from sqlalchemy.sql import Selectable, Select
 from starlette import status
 from starlette.requests import Request
 
@@ -47,17 +49,33 @@ class Paginator(object):
         self.total_pages = 0
         self.total_records = 0
 
-    def parse_order(self, model: Base, query_fields: any) -> any:
+    def order_by_primary_key(self, query: Select) -> any:
+        try:
+            primary_key_name = query.primary_key[0].name
+            order_field = query.columns.get(primary_key_name)
+        except IndexError:
+            return self.order_by_any_field(query)
+        return order_field
+
+    @staticmethod
+    def order_by_any_field(query: Select) -> any:
+        return next(iter(query.columns.values()))
+
+    def parse_order(self, model: Base, query: Select) -> any:
+
         if self.ordering is None:
-            return query_fields['Id']
+            return self.order_by_primary_key(query)
 
         desc = self.ordering[0] == '-'
         ordering = self.ordering[1:] if desc else self.ordering
-
         order_field = getattr(model, ordering, None)
-        order_key = order_field.expression.name if order_field else 'Id'
 
-        order_field = query_fields[order_key].desc() if desc else query_fields[order_key]
+        try:
+            order_key = order_field.expression.name
+            order_field = query.columns[order_key].desc() if desc else query.columns[order_key]
+        except (AttributeError, IndexError):
+            return self.order_by_primary_key(query)
+
         return order_field
 
     @property
@@ -102,16 +120,16 @@ class Paginator(object):
 
     def paginate(self, db_session: Session, model: Base, base_query: DBQuery) -> PaginatedResponse:
 
-        data_cte = base_query.cte(name='data_cte')
-        count_cte = data_cte.count().cte(name='count_cte')
+        data_cte: Select = base_query.cte(name='data_cte')
+        count_cte: Select = select([func.count().label('total')]).select_from(data_cte).cte(name='count_cte')
         q = (db_session.query(data_cte, count_cte)
-             .order_by(self.parse_order(model, data_cte.c))
+             .order_by(self.parse_order(model, data_cte))
              .offset((self.page - 1) * self.page_size)
              .limit(self.page_size)
              )
         result = q.all()
 
-        self.total_records = result[0].tbl_row_count if result else 0
+        self.total_records = result[0].total if result else 0
         self.total_pages = self.get_total_pages()
         if self.page > self.total_pages:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.NOT_FOUND_ERROR)

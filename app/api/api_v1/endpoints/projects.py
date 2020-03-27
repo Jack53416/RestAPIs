@@ -1,5 +1,3 @@
-from typing import List
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -8,10 +6,9 @@ from starlette import status
 from app import crud
 from app import schemas
 from app.api.utils.db import get_db
-from app.db.paginator import Paginator
 from app.api.utils.security import get_current_active_user
+from app.db.paginator import Paginator
 from app.models import Project, ProjectUser
-from app.models.user import User as DBUser
 from app.resources import strings
 from app.schemas import ProjectRole
 from app.schemas.common import PaginatedResponse
@@ -19,7 +16,10 @@ from app.schemas.common import PaginatedResponse
 router = APIRouter()
 
 
-@router.get("/", response_model=PaginatedResponse[schemas.Project])
+@router.get("/",
+            response_model=PaginatedResponse[schemas.Project],
+            name='projects:list-projects',
+            dependencies=[Depends(get_current_active_user)])
 def read_projects(paginator: Paginator = Depends(),
                   db: Session = Depends(get_db),
                   client: int = Query(None, gt=0),
@@ -37,10 +37,12 @@ def read_projects(paginator: Paginator = Depends(),
     return projects
 
 
-@router.get('/user', response_model=PaginatedResponse[schemas.ProjectUser])
+@router.get('/user',
+            response_model=PaginatedResponse[schemas.ProjectUser],
+            name='projects:list-project-users',
+            dependencies=[Depends(get_current_active_user)])
 def read_project_users(paginator: Paginator = Depends(),
                        db: Session = Depends(get_db),
-                       current_user: DBUser = Depends(get_current_active_user),
                        project: int = Query(None, gt=0),
                        user: int = Query(None, gt=0),
                        role: ProjectRole = None):
@@ -60,10 +62,12 @@ def read_project_users(paginator: Paginator = Depends(),
     return associations
 
 
-@router.post('/user', response_model=schemas.ProjectUser)
+@router.post('/user',
+             response_model=schemas.ProjectUser,
+             name='projects:create-project-user',
+             dependencies=[Depends(get_current_active_user)])
 def create_project_user(project_user: schemas.ProjectUserCreate,
-                        db: Session = Depends(get_db),
-                        current_user: DBUser = Depends(get_current_active_user)):
+                        db: Session = Depends(get_db)):
     """
     Create an association object between project and user. In other words assign user to a project.
     User is firstly granted with no permissions and project manager decides whether he can actually join the project.
@@ -79,12 +83,14 @@ def create_project_user(project_user: schemas.ProjectUserCreate,
     return project_user
 
 
-@router.patch('/user/{association_id}', response_model=schemas.ProjectUser)
+@router.patch('/user/{association_id}',
+              response_model=schemas.ProjectUser,
+              name='projects:patch-project-user',
+              dependencies=[Depends(get_current_active_user)])
 def update_project_user_role(*,
                              db: Session = Depends(get_db),
                              association_id: int,
-                             project_user_in: schemas.ProjectUserUpdate,
-                             current_user: DBUser = Depends(get_current_active_user)):
+                             project_user_in: schemas.ProjectUserUpdate):
     """
     Update project - user association data.
     """
@@ -95,4 +101,3 @@ def update_project_user_role(*,
                             detail=strings.NOT_FOUND_ERROR)
     project_user = crud.project_user.update(db, db_obj=project_user, obj_in=project_user_in)
     return project_user
-

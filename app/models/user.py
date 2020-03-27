@@ -1,6 +1,16 @@
-from sqlalchemy import Column, String, Integer, Boolean, DateTime
+import datetime
+
+from sqlalchemy import Column, String, Integer, Boolean, DateTime, TypeDecorator
 
 from app.db.base_class import Base
+
+
+# noinspection PyAbstractClass
+class AwareDateTime(TypeDecorator):
+    impl = DateTime
+
+    def process_result_value(self, value, dialect):
+        return value.replace(tzinfo=datetime.timezone.utc)
 
 
 class User(Base):
@@ -14,7 +24,7 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     is_staff = Column(Boolean)
     is_eeci = Column(Boolean, default=False)
-    date_joined = Column(DateTime)
+    date_joined = Column(AwareDateTime)
     is_superuser = Column(Boolean, default=False)
     full_name = Column('FullName', String)
     hashed_password = Column('password', String)

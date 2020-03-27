@@ -7,6 +7,8 @@ def create_col_lookup(mapper):
 
 
 class ColBase(object):
+    class Meta(object):
+        ordering = None
 
     @classmethod
     def create_col_lookup(cls):
