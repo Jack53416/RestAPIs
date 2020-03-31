@@ -4,11 +4,12 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from pytest_factoryboy import register
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session
 
 from app.core import config
 from app.core.jwt import create_user_access_token
+from app.core.security import get_password_hash
 from app.db.base_class import Base
 from app.db.session import SessionLocal
 from app.schemas import User
@@ -23,63 +24,47 @@ register(UserFactory)
 
 @pytest.fixture(scope='session')
 def engine():
-    return create_engine(config.TEST_DATABASE_URI, connect_args={"check_same_thread": False})
-
-
-@pytest.fixture(scope='session')
-def tables(engine):
+    engine = create_engine(config.TEST_DATABASE_URI, connect_args={"check_same_thread": False})
     Base.metadata.create_all(engine)
-    yield
+
+    @event.listens_for(engine, "connect")
+    def do_connect(dbapi_connection, connection_record):
+        # disable pysqlite's emitting of the BEGIN statement entirely.
+        # also stops it from emitting COMMIT before any DDL.
+        dbapi_connection.isolation_level = None
+
+    @event.listens_for(engine, "begin")
+    def do_begin(conn):
+        # emit our own BEGIN
+        conn.execute("BEGIN")
+
+    yield engine
     Base.metadata.drop_all(engine)
 
 
-@pytest.fixture(scope='session')
-def connection(engine):
+@pytest.fixture(scope='class')
+def top_level_session(engine, request):
     connection = engine.connect()
-    yield connection
+    transaction = connection.begin()
+    SessionLocal.configure(bind=connection)
+    session = TestSession()
+    request.cls.Session = session
+    yield session
+    session.close()
+    transaction.rollback()
     connection.close()
 
 
-@pytest.fixture(scope='function', autouse=False)
-def db_session(connection, tables):
-    # begin the nested transaction
-    transaction = connection.begin()
-    SessionLocal.configure(autocommit=False, autoflush=False, bind=connection)
+@pytest.fixture()
+def db_session(top_level_session: Session):
+    top_level_session.begin_nested()
 
-    session: Session = SessionLocal()
-    # session.begin_nested()
-    yield session
-    # roll back the broader transaction
-    # session.rollback()
-    transaction.rollback()
-    TestSession.remove()
+    @event.listens_for(top_level_session, 'after_transaction_end')
+    def restart_savepoint(session: Session, transaction: any):
+        if transaction.nested and not transaction._parent.nested:
+            session.expire_all()
+            session.begin_nested()
 
+    yield top_level_session
 
-@pytest.fixture
-def app() -> FastAPI:
-    from app.main import app
-    return app
-
-
-@pytest.fixture
-def client(app) -> TestClient:
-    return TestClient(app)
-
-
-@pytest.fixture
-def test_user(user_factory, db_session) -> User:
-    return user_factory(is_superuser=True)
-
-
-@pytest.fixture
-def token(test_user: User) -> str:
-    return create_user_access_token(test_user)
-
-
-@pytest.fixture
-def authorized_client(client: TestClient, token: str):
-    client.headers = {
-        "Authorization": f"Bearer {token}",
-        **client.headers,
-    }
-    return client
+    top_level_session.rollback()
