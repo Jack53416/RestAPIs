@@ -1,6 +1,7 @@
 import datetime
+import re
 
-from typing import Generic, TypeVar, List
+from typing import Generic, TypeVar, List, Match
 from pydantic import BaseModel, HttpUrl, AnyUrl
 from pydantic.generics import GenericModel
 
@@ -10,6 +11,15 @@ DataT = TypeVar('DataT')
 def to_camel_case(snake_str: str) -> str:
     first, *others = snake_str.split('_')
     return ''.join([first.lower(), *map(str.title, others)])
+
+
+def to_snake_case(camel_str: str) -> str:
+    reg = r'(.+?)([A-Z])'
+
+    def snake(match: Match):
+        return f'{match.group(1).lower()}_{match.group(2).lower()}'
+
+    return re.sub(reg, snake, camel_str, 0)
 
 
 def convert_datetime_to_realword(dt: datetime.datetime) -> str:

@@ -9,6 +9,7 @@ from sqlalchemy.sql import Selectable, Select
 from starlette import status
 from starlette.requests import Request
 
+from app import schemas
 from app.db.base_class import Base
 from app.resources import strings
 from app.schemas.common import Links, PaginatedResponse
@@ -68,6 +69,7 @@ class Paginator(object):
 
         desc = self.ordering[0] == '-'
         ordering = self.ordering[1:] if desc else self.ordering
+        ordering = schemas.common.to_snake_case(ordering)
         order_field = getattr(model, ordering, None)
 
         try:

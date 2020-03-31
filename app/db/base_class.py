@@ -1,5 +1,5 @@
 from sqlalchemy import inspect
-from sqlalchemy.ext.declarative import declarative_base, declared_attr
+from sqlalchemy.ext.declarative import declarative_base, DeclarativeMeta
 
 
 def create_col_lookup(mapper):
@@ -7,9 +7,6 @@ def create_col_lookup(mapper):
 
 
 class ColBase(object):
-    class Meta(object):
-        ordering = None
-
     @classmethod
     def create_col_lookup(cls):
         return {c.name: k for k, c in inspect(cls).mapper.columns.items()}
