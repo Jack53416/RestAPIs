@@ -28,4 +28,4 @@ class UserFactory(factory.alchemy.SQLAlchemyModelFactory):
     is_eeci = True
     is_superuser = False
     date_joined = factory.LazyFunction(partial(datetime.datetime.now, datetime.timezone.utc))
-    hashed_password = factory.LazyFunction(partial(get_password_hash, config.FIRST_SUPERUSER_PASSWORD))
+    hashed_password = 'stub_hash'
