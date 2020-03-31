@@ -1,18 +1,13 @@
 import logging
 
 import pytest
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
 from pytest_factoryboy import register
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session
 
 from app.core import config
-from app.core.jwt import create_user_access_token
-from app.core.security import get_password_hash
 from app.db.base_class import Base
 from app.db.session import SessionLocal
-from app.schemas import User
 from app.tests.utils.session import TestSession
 from .utils.factories import UserFactory
 
@@ -48,10 +43,12 @@ def top_level_session(engine, request):
     transaction = connection.begin()
     SessionLocal.configure(bind=connection)
     session = TestSession()
-    request.cls.Session = session
+    if request.cls:
+        request.cls.Session = session
     yield session
     session.close()
     transaction.rollback()
+    TestSession.remove()
     connection.close()
 
 

@@ -6,8 +6,8 @@ from app.models import User as DBUser
 from app.schemas import User
 
 
-def test_token_valid(app: FastAPI, authorized_client: TestClient, test_user: DBUser):
+def test_token_valid(app: FastAPI, authorized_client: TestClient, admin_user: DBUser):
     response = authorized_client.post(app.url_path_for('login:verify-token'))
     assert response.status_code == status.HTTP_200_OK
-    assert User.parse_raw(response.content) == User.parse_obj(test_user.__dict__)
+    assert User.parse_raw(response.content) == User.parse_obj(admin_user.__dict__)
 
