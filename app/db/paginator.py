@@ -2,10 +2,10 @@ from math import ceil
 from typing import Optional
 
 from fastapi import Query, HTTPException
-from sqlalchemy import inspect, func, select
-from sqlalchemy.orm import Session
+from sqlalchemy import func, select
 from sqlalchemy.orm import Query as DBQuery
-from sqlalchemy.sql import Selectable, Select
+from sqlalchemy.orm import Session
+from sqlalchemy.sql import Select
 from starlette import status
 from starlette.requests import Request
 
@@ -20,9 +20,7 @@ class Paginator(object):
     Custom page paginator class. It utilizes CTE SQL queries to get record count efficiently in a single
     database query
     """
-
-    # ToDo(Jacek): Specify default ordering for each model and use it in paginator
-    # ToDo(Jacek): Add suport for multiple field ordering
+    # ToDo(Jacek): Add support for multiple field ordering
 
     default_page_size = 100
     default_page = 1

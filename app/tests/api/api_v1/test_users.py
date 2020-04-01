@@ -12,7 +12,7 @@ from app.schemas.common import PaginatedResponse
 from app.tests.utils.factories import UserFactory
 
 
-@pytest.mark.usefixtures('top_level_session', 'db_session')
+@pytest.mark.usefixtures('top_level_session')
 class TestOrdering(object):
     user_number = 5
     fields = list(schemas.User.schema(by_alias=False)['properties'].keys())
@@ -25,18 +25,27 @@ class TestOrdering(object):
         user_list.append(admin_user)
         request.cls.user_list = user_list
 
+    @pytest.fixture(params=['asc', 'desc'])
+    def descending(self, request):
+        return request.param == 'desc'
+
     @pytest.mark.parametrize('order_field', fields)
-    def test_ordering_username_asc(self,
-                                   order_field,
-                                   app: FastAPI,
-                                   authorized_client: TestClient):
+    def test_ordering(self,
+                      order_field,
+                      app: FastAPI,
+                      descending: bool,
+                      authorized_client: TestClient):
+
         aliased_field = schemas.common.to_camel_case(order_field)
+        if descending:
+            aliased_field = '-' + aliased_field
+
         response = authorized_client.get(app.url_path_for('users:list-users'), params={'ordering': aliased_field})
         assert response.status_code == status.HTTP_200_OK
 
         response = PaginatedResponse.parse_raw(response.content)
         assert response.count == len(self.user_list)
-        expected_response = sorted([getattr(user, order_field) for user in self.user_list])
+        expected_response = sorted([getattr(user, order_field) for user in self.user_list], reverse=descending)
         actual_response = [getattr(User.parse_obj(user), order_field) for user in response.data]
 
         assert actual_response == expected_response

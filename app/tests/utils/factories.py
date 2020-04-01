@@ -5,8 +5,6 @@ import factory
 from faker import Factory as FakerFactory
 
 from app import models
-from app.core import config
-from app.core.security import get_password_hash
 from app.tests.utils.session import TestSession
 
 faker = FakerFactory.create()
